@@ -12,7 +12,12 @@ module JqueryDatepicker
       tf_options[:value] = input_tag.format_date(tf_options[:value], String.new(dp_options[:dateFormat])) if  tf_options[:value] && !tf_options[:value].empty? && dp_options.has_key?(:dateFormat)
       html = input_tag.to_input_field_tag("text", tf_options)
       method = timepicker ? "datetimepicker" : "datepicker"
-      html += javascript_tag("jQuery(document).ready(function(){jQuery('##{input_tag.get_name_and_id["id"]}').#{method}(#{dp_options.to_json})});")
+      ready_js = "jQuery('##{input_tag.get_name_and_id["id"]}').#{method}(#{dp_options.to_json})"
+      if dp_options.has_key?(:altField)
+        # http://stackoverflow.com/questions/3922592/jquery-ui-datepicker-clearing-the-altfield-when-the-primary-field-is-cleared
+        ready_js = "#{ready_js}; jQuery('##{input_tag.get_name_and_id["id"]}').change(function() { if (!$(this).val()) { jQuery('#{dp_options[:altField]}').val(''); } });"
+      end
+      html += javascript_tag("jQuery(document).ready(function(){#{ready_js}});")
       html.html_safe
     end
     
