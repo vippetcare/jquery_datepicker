@@ -8,11 +8,10 @@ module JqueryDatepicker
     # Mehtod that generates datepicker input field inside a form
     def datepicker(object_name, method, options = {}, timepicker = false)
       input_tag =  JqueryDatepicker::InstanceTag.new(object_name, method, self, options.delete(:object))
-      dp_options, tf_options =  input_tag.split_options(options)
-      tf_options[:value] = input_tag.format_date(tf_options[:value], String.new(dp_options[:dateFormat])) if  tf_options[:value] && !tf_options[:value].empty? && dp_options.has_key?(:dateFormat)
-      html = input_tag.to_input_field_tag("text", tf_options)
+      html, dp_options = input_tag.render
       method = timepicker ? "datetimepicker" : "datepicker"
-      ready_js = "jQuery('##{input_tag.get_name_and_id(tf_options)["id"]}').#{method}(#{dp_options.to_json})"
+
+      ready_js = "jQuery(document).ready(function(){jQuery('##{input_tag.get_name_and_id["id"]}').#{method}(#{dp_options.to_json})});"
       if dp_options.has_key?(:altField)
         # http://stackoverflow.com/questions/3922592/jquery-ui-datepicker-clearing-the-altfield-when-the-primary-field-is-cleared
         ready_js = "#{ready_js}; jQuery('##{input_tag.get_name_and_id(tf_options)["id"]}').change(function() { if (!$(this).val()) { jQuery('#{dp_options[:altField]}').val(''); } });"
@@ -35,7 +34,7 @@ module JqueryDatepicker::FormBuilder
   end
 end
 
-class JqueryDatepicker::InstanceTag < ActionView::Helpers::InstanceTag
+class JqueryDatepicker::InstanceTag < ActionView::Helpers::Tags::Base
 
   FORMAT_REPLACEMENTES = { "yy" => "%Y", "mm" => "%m", "dd" => "%d", "d" => "%-d", "m" => "%-m", "y" => "%y", "M" => "%b"}
 
@@ -48,7 +47,7 @@ class JqueryDatepicker::InstanceTag < ActionView::Helpers::InstanceTag
   end
 
   def available_datepicker_options
-    [:disabled, :altField, :altFormat, :appendText, :autoSize, :buttonImage, :buttonImageOnly, :buttonText, :calculateWeek, :changeMonth, :changeYear, :closeText, :constrainInput, :currentText, :dateFormat, :dayNames, :dayNamesMin, :dayNamesShort, :defaultDate, :duration, :firstDay, :gotoCurrent, :hideIfNoPrevNext, :isRTL, :maxDate, :minDate, :monthNames, :monthNamesShort, :navigationAsDateFormat, :nextText, :numberOfMonths, :prevText, :selectOtherMonths, :shortYearCutoff, :showAnim, :showButtonPanel, :showCurrentAtPos, :showMonthAfterYear, :showOn, :showOptions, :showOtherMonths, :showWeek, :stepMonths, :weekHeader, :yearRange, :yearSuffix]
+    ['disabled', 'altField', 'altFormat', 'appendText', 'autoSize', 'buttonImage', 'buttonImageOnly', 'buttonText', 'calculateWeek', 'changeMonth', 'changeYear', 'closeText', 'constrainInput', 'currentText', 'dateFormat', 'dayNames', 'dayNamesMin', 'dayNamesShort', 'defaultDate', 'duration', 'firstDay', 'gotoCurrent', 'hideIfNoPrevNext', 'isRTL', 'maxDate', 'minDate', 'monthNames', 'monthNamesShort', 'navigationAsDateFormat', 'nextText', 'numberOfMonths', 'prevText', 'selectOtherMonths', 'shortYearCutoff', 'showAnim', 'showButtonPanel', 'showCurrentAtPos', 'showMonthAfterYear', 'showOn', 'showOptions', 'showOtherMonths', 'showWeek', 'stepMonths', 'weekHeader', 'yearRange', 'yearSuffix']
   end
 
   def split_options(options)
@@ -67,6 +66,26 @@ class JqueryDatepicker::InstanceTag < ActionView::Helpers::InstanceTag
 
   def translate_format(format)
     format.gsub!(/#{FORMAT_REPLACEMENTES.keys.join("|")}/) { |match| FORMAT_REPLACEMENTES[match] }
+  end
+
+  def render
+    options = @options.stringify_keys
+    dp_options, tf_options = split_options(options)
+    tf_options['value'] = format_date(tf_options['value'], String.new(dp_options['dateFormat'])) if  tf_options['value'] && !tf_options['value'].empty? && dp_options.has_key?('dateFormat')
+    add_default_name_and_id(options)
+    return tag("text", tf_options), dp_options
+  end
+
+  class << self
+    def field_type
+      @field_type ||= "text"
+    end
+  end
+
+  private
+
+  def field_type
+    self.class.field_type
   end
 
 end
