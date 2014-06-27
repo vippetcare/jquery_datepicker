@@ -11,10 +11,11 @@ module JqueryDatepicker
       html, dp_options = input_tag.render
       method = timepicker ? "datetimepicker" : "datepicker"
 
-      ready_js = "jQuery(document).ready(function(){jQuery('##{input_tag.get_name_and_id["id"]}').#{method}(#{dp_options.to_json})});"
+      field_id = options["id"] || input_tag.get_name_and_id["id"]
+      ready_js = "jQuery('##{field_id}').#{method}(#{dp_options.to_json});"
       if dp_options.has_key?("altField")
         # http://stackoverflow.com/questions/3922592/jquery-ui-datepicker-clearing-the-altfield-when-the-primary-field-is-cleared
-        ready_js = "#{ready_js}; jQuery('##{input_tag.get_name_and_id["id"]}').change(function() { if (!$(this).val()) { jQuery('#{dp_options['altField']}').val(''); } });"
+        ready_js = "#{ready_js}; jQuery('##{field_id}').change(function() { if (!$(this).val()) { jQuery('#{dp_options['altField']}').val(''); } });"
       end
       html += javascript_tag("jQuery(document).ready(function(){#{ready_js}});")
       html.html_safe
